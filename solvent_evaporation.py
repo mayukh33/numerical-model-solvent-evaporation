@@ -160,7 +160,6 @@ while t_ <= final_time:
         eff_Dl_arr = (Dl_arr / Dmb0) / delta_pred
         Dg_eff_pred = (1.0 / alpha) / Lg_pred
         
-        # 3. Interfacial Boundaries
         C_liq_bnd = 2.0 * eff_Dl_arr[-1] / dx 
         C_gas_bnd = 2.0 * Dg_eff_pred / dx
         K_part = scaled_rhol_current[-1] / scaled_Ml_arr[-1]
@@ -173,7 +172,7 @@ while t_ <= final_time:
         
         # Setting new values for delta and diffusivities
         eff_Dl_cv.setValue(eff_Dl_arr)
-        Dg_eff_cv.setValue(float(Dg_eff_pred))
+        Dg_eff_cv.setValue(Dg_eff_pred)
         
         k = 1.0 - const_rho * scaled_rhol_current[-1]
         
@@ -182,8 +181,8 @@ while t_ <= final_time:
         v_gas_face.setValue(ddelta_dt_actual * (mesh_g.faceCenters - 2.0 + k))
         
         # Update constraints
-        uN_var.setValue(float(uN))
-        v0_var.setValue(float(v0))
+        uN_var.setValue(uN)
+        v0_var.setValue(v0)
         
         # Solve PDEs 
         eq_l.solve(var=scaled_rhoml, dt=dt)
