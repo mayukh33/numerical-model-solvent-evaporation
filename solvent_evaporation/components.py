@@ -1,5 +1,3 @@
-"""Component types.  Substance data is supplied by the caller as dictionaries."""
-
 from dataclasses import dataclass
 
 REQUIRED_KEYS = ("M", "rho_pure", "p_sat", "Dg")

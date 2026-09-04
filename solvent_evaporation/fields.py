@@ -1,4 +1,4 @@
-"""FiPy variables and equations for one component.  Requires FiPy."""
+"""FiPy variables and equations for one component."""
 
 import numpy as np
 import fipy as fp
@@ -9,8 +9,7 @@ class ComponentField:
 
     def __init__(self, mesh, delta_var, Lg_var, v_liq_face, v_gas_face,
                  eff_Dl_cv, liquid_ini=1.0, gas_ini=0.0):
-        # liquid_ini / gas_ini: scalar or array of length mesh.nx, in the scaled
-        # units the solver transports.  gas_ini = 0.0 starts the gas empty.
+        
         self.mesh = mesh
 
         self.uN_var = fp.Variable(value=1.0)

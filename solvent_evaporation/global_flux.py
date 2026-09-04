@@ -1,4 +1,4 @@
-"""Global (domain-integrated) flux balance.  No FiPy."""
+"""Global (domain-integrated) flux balance."""
 
 
 class GlobalFluxBalance:
@@ -8,7 +8,6 @@ class GlobalFluxBalance:
         self.mixture = mixture
 
     def rate_terms(self, omega0, gamma, alpha, Lg, grad_gas_right, dIg_dt):
-        # term1: flux leaving the outer boundary.  term2: gas inventory change.
         term1 = (omega0 * gamma / (alpha * Lg)) * grad_gas_right
         term2 = omega0 * gamma * Lg * dIg_dt
         return term1, term2
