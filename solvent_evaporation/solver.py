@@ -195,6 +195,5 @@ class EvaporationSolver:
                         rho_g_A=self.field_A.rho_g.value,
                         rho_g_B=self.field_B.rho_g.value,
                         rho_l=scaled_rhol_new, rhol=rhol_new)
-            print(t_)
             t_ += dt
             step += 1

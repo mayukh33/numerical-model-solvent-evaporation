@@ -59,8 +59,8 @@ dt = 5e-6
 final_time = 0.6
 store_period = 1000
 
-output_dir = (f"../numerical-model-analysis/profile_time_fipy_binary_"
-              f"{wt_frac_A:.2f}_{dt:.2e}_{dx:.2e}-paper")
+output_dir = (f"../../profile_time_fipy_binary_"
+              f"{wt_frac_A:.2f}_{dt:.2e}_{dx:.2e}")
 
 # --- build ---------------------------------------------------------------
 mixture = Mixture(component_A, component_B, wt_frac_A,
