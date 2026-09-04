@@ -1,4 +1,4 @@
-"""Time loop and Picard iteration.  Requires FiPy."""
+"""Time loop and Picard iteration"""
 
 from dataclasses import dataclass
 
@@ -30,10 +30,10 @@ class State:
     delta: float
     ddelta_dt: float
     err: float
-    rho_l_A: np.ndarray     
-    rho_l_B: np.ndarray      
-    rho_g_A: np.ndarray      
-    rho_g_B: np.ndarray      
+    rho_l_A: np.ndarray
+    rho_l_B: np.ndarray
+    rho_g_A: np.ndarray
+    rho_g_B: np.ndarray
     rho_l: np.ndarray        # scaled mixture density
     rhol: np.ndarray         # unscaled mixture density, kg/m^3
 
