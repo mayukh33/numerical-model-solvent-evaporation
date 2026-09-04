@@ -76,8 +76,7 @@ solver = EvaporationSolver(mixture, mesh,
 
 print(f"{component_A.name} (A) + {component_B.name} (B) | "
       f"wt_A = {wt_frac_A} | rhol_0 = {mixture.rhol_0:.2f} kg/m3")
-print(f"gamma_A = {mixture.gamma_A:.4e} | gamma_B = {mixture.gamma_B:.4e} | "
-      f"D_ref = {mixture.D_ref:.3e} m2/s")
+print(f"gamma_A = {mixture.gamma_A:.4e} | gamma_B = {mixture.gamma_B:.4e} |")
 
 # --- run and store -------------------------------------------------------
 # The solver yields every step; store_period decides what is kept.
