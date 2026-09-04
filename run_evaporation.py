@@ -18,14 +18,12 @@ components = {
         "rho_pure": 787.2,    # pure liquid density, kg/m^3
         "p_sat": 16981.0,     # saturation vapour pressure, Pa
         "Dg": 1.51e-5,        # gas-phase diffusivity, m^2/s
-        "source": "Song et al., Int. J. Heat Mass Transfer 100 (2016) 800-809",
     },
     "1-butanol": {
         "M": 74.12,
         "rho_pure": 805.9,
         "p_sat": 887.0,
-        "Dg": 0.81e-5,
-        "source": "Song et al., Int. J. Heat Mass Transfer 100 (2016) 800-809",
+        "Dg": 0.81e-5
     },
 }
 

@@ -63,5 +63,5 @@ class ComponentLibrary:
         except KeyError:
             raise KeyError(
                 f"no binary diffusivity for ({name_A!r}, {name_B!r}). "
-                f"Add BOTH directions to the `diffusivities` dict you passed "
-                f"to ComponentLibrary. Known pairs: {self.pairs()}") from None
+                )
+            
