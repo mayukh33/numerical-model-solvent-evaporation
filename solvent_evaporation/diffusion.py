@@ -19,6 +19,16 @@ def maxwell_stefan_diffusivities(x, D0):
     return D
 
 
+def mole_fraction_jacobian(phi, nu):
+    """X_jl = dx_j/dphi_l, (N-1, N-1), at volume fractions phi, with phi_N eliminated."""
+    # X_jl = delta_jl/(nu_j c_t) - (c_j/c_t^2)(1/nu_l - 1/nu_N)
+    n = phi.size - 1
+    c = phi / nu
+    c_t = c.sum()
+    return (numpy.diag(1.0 / nu[:n]) / c_t
+            - numpy.outer(c[:n] / c_t ** 2, 1.0 / nu[:n] - 1.0 / nu[-1]))
+
+
 def fick_matrix(phi, nu, D0):
     """Volume-frame Fick matrix over D_ref, (N-1, N-1), at volume fractions phi."""
     # j = -[D] grad phi ,  [D] = diag(nu) T c_t B^-1 X
@@ -41,8 +51,7 @@ def fick_matrix(phi, nu, D0):
     # T_ik = delta_ik - c_i (nu_k - nu_N): molar frame -> volume frame
     T = numpy.eye(n) - numpy.outer(c[:n], nu[:n] - nu[-1])
     # X_jl = dx_j/dphi_l: grad x -> grad phi
-    X = (numpy.diag(1.0 / nu[:n]) / c_t
-         - numpy.outer(c[:n] / c_t ** 2, 1.0 / nu[:n] - 1.0 / nu[-1]))
+    X = mole_fraction_jacobian(phi, nu)
     # [D] = diag(nu) T c_t B^-1 X, accumulated left to right
     fick = numpy.matmul(numpy.diag(nu[:n]), T)
     fick = numpy.matmul(fick, c_t * numpy.linalg.inv(B))

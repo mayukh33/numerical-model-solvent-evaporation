@@ -6,7 +6,7 @@ from . import diffusion
 
 
 class Mixture:
-    """N solvents as dimensionless groups; the least volatile must be LAST."""
+    """N solvents as dimensionless groups; any component order is accepted."""
 
     def __init__(self, gamma, alpha, theta, nu, D0):
         self.gamma = numpy.asarray(gamma, dtype=float)
@@ -15,15 +15,6 @@ class Mixture:
         self.nu = numpy.asarray(nu, dtype=float)
         self.D0 = numpy.asarray(D0, dtype=float)
         self.n = self.gamma.size
-
-        if self.n > 1 and self.gamma[-1] > self.gamma[:-1].min():
-            least = int(self.gamma.argmin())
-            raise ValueError(
-                f"the last component must be the least volatile, but gamma = "
-                f"{self.gamma.tolist()} puts the smallest at index {least}. "
-                f"Reorder every argument -- gamma, alpha, theta, nu, the rows "
-                f"and columns of D0, and the initial phi0 -- so component "
-                f"{least} comes last.")
 
     def fill_last(self, partial):
         """Append the reconstructed last component, so phi sums to one."""
@@ -46,3 +37,7 @@ class Mixture:
     def fick_matrix(self, phi):
         """Volume-frame Fick matrix over D_ref, (N-1, N-1), at phi (N,)."""
         return diffusion.fick_matrix(phi, self.nu, self.D0)
+
+    def mole_fraction_jacobian(self, phi):
+        """dx_j/dphi_l, (N-1, N-1), at phi (N,); phi_N is the eliminated one."""
+        return diffusion.mole_fraction_jacobian(phi, self.nu)

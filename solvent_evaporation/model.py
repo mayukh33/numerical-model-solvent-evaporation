@@ -76,10 +76,26 @@ class EvaporationModel:
                 # No sign change: bracket lost; the bounded solve handles it.
                 pass
 
-        solved = least_squares(self.interface_residual, numpy.zeros(n), args=args,
+        guess = self.interface_guess(phi_last, psi_first, h_l, h_g)
+        solved = least_squares(self.interface_residual, guess, args=args,
                                bounds=(0.0, 1.0),
                                xtol=1e-10, ftol=1e-10, gtol=1e-15)
         return self.interface_state(solved.x, psi_first, h_g)
+
+    def interface_guess(self, phi_last, psi_first, h_l, h_g):
+        """Quasi-steady phi_s: the two half-cell diffusive fluxes set equal."""
+        m = self.mixture
+        n = m.n - 1
+        # [D](phi_c - phi_s)/h_l = [gamma_i x_i(phi_s) - psi_i,1]/(alpha_i h_g)
+        k = m.gamma[:n] / (m.alpha[:n] * h_g)
+        # Raoult linearised about phi_c: x(phi_s) = x_c + X (phi_s - phi_c)
+        A = m.fick_matrix(phi_last) / h_l + k[:, None] * m.mole_fraction_jacobian(phi_last)
+        b = k * m.mole_fractions(phi_last)[:n] - psi_first[:n] / (m.alpha[:n] * h_g)
+        try:
+            # phi_s = phi_c - (A + C)^-1 b, clipped into the solver's box
+            return numpy.clip(phi_last[:n] - numpy.linalg.solve(A, b), 0.0, 1.0)
+        except numpy.linalg.LinAlgError:
+            return numpy.zeros(n)
 
     def interface_state(self, phi_s_n, psi_first, h_g):
         """(phi_s, psi_s, flux n_i, Stefan draft, ddelta_hat/dt_hat) at phi_s_n."""
