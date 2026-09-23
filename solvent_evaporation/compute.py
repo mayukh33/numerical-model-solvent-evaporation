@@ -1,11 +1,4 @@
-"""Fixed-step time integration in scaled time, t_hat = t D_ref/delta0^2.
-
-Backward Euler, y_next = y + h f(y_next), solved by Newton at every step:
-the residual r = y_next - y - h f(y_next) has derivative I - h J, so each
-iteration solves (I - h J) correction = -r.  Implicit because the problem is
-stiff (alpha = D_ref/Dg ~ 4e-5, Song et al. Eq. 31); solving a nonlinear system
-per step is what Alsoy & Duda do too, their Eqs. (30)-(31).  Nothing adapts.
-"""
+"""Fixed-step backward Euler in scaled time; nothing adapts."""
 
 import time
 from dataclasses import dataclass
@@ -47,24 +40,8 @@ class Result:
 
 
 def jacobian(model, t, y, eps=1e-7):
-    """df/dy by forward differences, one column per state entry.
-
-    This is Numerical Recipes' fdjac (their Sec. 9.7), with the step rule of
-    their Sec. 5.7: h = eps * |y_i|, relative so that it suits entries of any
-    size, falling back to eps for an entry that is exactly zero.  Then
-
-        perturbed[i] = y_i + h ;   h = perturbed[i] - y_i
-
-    reads the step back after rounding, so the quotient is divided by the step
-    the machine actually took rather than the one asked for.
-
-    eps should be the square root of the fractional accuracy of f, which here is
-    not machine epsilon: every rhs call closes an interface root-find, to about
-    1e-12 with one volatile component and 1e-10 with more (see
-    model.EvaporationModel.interface), so f carries noise well above 1e-16 and
-    eps must stay above its square root.  Below that the subtraction of two nearly equal rhs values
-    loses more than the smaller step gains.
-    """
+    """df/dy by forward differences; eps is floored by rhs noise."""
+    # J[:, i] = (f(y + h e_i) - f(y)) / h,  h = eps |y_i|
     f0 = model.rhs(t, y)
     J = numpy.empty((y.size, y.size))
     for i in range(y.size):
@@ -79,22 +56,14 @@ def jacobian(model, t, y, eps=1e-7):
 
 
 def backward_euler_step(model, t, y, h, newton_tol, max_newton):
-    """The state at t + h, by Newton's method.
-
-    The Jacobian is taken once, at the old state, and held for the whole step,
-    so the iteration converges linearly rather than quadratically.  That is also
-    what limits the step: held, the model of the step goes stale as the state
-    moves, and past about ten times the fastest timescale in the problem the
-    corrections stop shrinking.
-
-    The first guess is the old state: an explicit predictor y + h f(y) would
-    start Newton with a negative film thickness.
-    """
+    """The state at t + h, by Newton with a frozen Jacobian."""
+    # y_next = y + h f(t + h, y_next); Newton solves (I - h J) c = -r for c
     matrix = numpy.eye(y.size) - h * jacobian(model, t + h, y)
 
     y_next = y.copy()
     for _ in range(max_newton):
         try:
+            # r = y_next - y - h f(t + h, y_next)
             residual = y_next - y - h * model.rhs(t + h, y_next)
         except (RuntimeError, numpy.linalg.LinAlgError) as reason:
             raise RuntimeError(
@@ -113,13 +82,7 @@ def backward_euler_step(model, t, y, h, newton_tol, max_newton):
 
 def compute(model, t_end, dt, store_period=1, progress=0, newton_tol=1e-10,
             max_newton=1000):
-    """March from t_hat = 0 to t_end in steps of exactly dt.
-
-    Times are k * dt; t_end is rounded to a whole number of steps.
-    store_period keeps every store_period-th step (first and last always),
-    which changes nothing about the march.  progress prints a bar every
-    `progress` steps; 0 is silent.
-    """
+    """March from t_hat = 0 to t_end in steps of exactly dt."""
     n_steps = numpy.max((1, numpy.round(t_end / dt))).astype(numpy.int64)
 
     # Worked out up front so states is allocated once at its final size.
