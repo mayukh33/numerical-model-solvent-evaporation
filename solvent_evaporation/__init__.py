@@ -1,15 +1,22 @@
-"""1D two-component solvent evaporation with a moving interface.
+"""Multicomponent solvent evaporation into still air, by the method of lines.
 
-components      Component and ComponentLibrary types (no data; you supply it)
-thermodynamics  Mixture: reference state and the equation of state
-mesh            ScaledMesh: the eta grids and dx-dependent operators
-fields          ComponentField: FiPy variables and equations, one component
-local_flux      LocalFluxBalance: interfacial balance -> v0, uN
-global_flux     GlobalFluxBalance: integrated balance -> ddelta_dt
-solver          EvaporationSolver: the time loop
+Everything is in scaled coordinates: lengths over the initial film thickness,
+time as Song et al.'s t_hat = t D_ref/delta0^2, and a case set by the
+dimensionless groups gamma_i, alpha_i, lam_i, nu_i and b_hat rather than by any
+dimensional property.  The mesh step and the time step are both fixed and both
+given by the caller.  Needs only NumPy and SciPy.
 
-Deliberately imports nothing: mesh, fields and solver need FiPy, the rest do not.
+mesh        Grid: uniform finite-volume cells
+diffusion   Maxwell-Stefan / multicomponent Vignes -> volume-frame Fick matrix
+mixture     Mixture: the dimensionless groups, Raoult vapour, ideal solution
+model       EvaporationModel: state layout, interface closure, right-hand side
+compute     compute(): fixed-step backward Euler, post-processed into a Result
 """
 
-__all__ = ["components", "thermodynamics", "mesh", "fields", "local_flux",
-           "global_flux", "solver"]
+from .mesh import Grid
+from .mixture import Mixture
+from .model import EvaporationModel
+from .compute import Result, compute
+
+__all__ = ["Grid", "Mixture", "EvaporationModel",
+           "Result", "compute"]
