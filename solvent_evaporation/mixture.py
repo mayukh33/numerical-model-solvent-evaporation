@@ -1,7 +1,4 @@
-"""Dimensionless groups gamma, theta, alpha, nu, D0; see VOLUME_FRAME.tex."""
-
 import numpy
-
 from . import diffusion
 
 

@@ -21,12 +21,18 @@ class EvaporationModel:
         self.psi_ambient = (numpy.zeros(N) if psi_ambient is None
                             else numpy.asarray(psi_ambient, dtype=float))
 
-        self.liquid_grid = Grid(60) if liquid_grid is None else liquid_grid
-        self.gas_grid = Grid(120, start=1.0) if gas_grid is None else gas_grid
+        if liquid_grid is None:
+           raise ValueError("Provide a valid liquid grid")
+        else:
+           self.liquid_grid = liquid_grid
+        if gas_grid is None:
+           raise ValueError("Provide a valid gas grid")
+        else:
+            self.gas_grid = gas_grid
 
         self.liquid_end = (N - 1) * self.liquid_grid.n
         self.delta_index = self.liquid_end + N * self.gas_grid.n
-        self.size = self.delta_index + 1 + N
+        self.size = self.delta_index + 1
 
     # --- state ----------------------------------------------------------------
 
@@ -36,8 +42,7 @@ class EvaporationModel:
         return numpy.concatenate((
             numpy.repeat(self.phi0[:-1], nl),
             numpy.repeat(self.psi_ambient, ng) * self.L_hat0,
-            [1.0],
-            numpy.zeros(self.mixture.n)))
+            [1.0]))
 
     def fields(self, y):
         """Unpack: phi (N, n_liquid), psi (N, n_gas), delta_hat, L_hat."""
@@ -48,15 +53,6 @@ class EvaporationModel:
         u = y[:self.liquid_end].reshape(N - 1, self.liquid_grid.n)
         w = y[self.liquid_end:self.delta_index].reshape(N, self.gas_grid.n)
         return self.mixture.fill_last(u / delta_hat), w / L_hat, delta_hat, L_hat
-
-    def conserved_volume(self, y, fields=None):
-        """Volume of each component: film + vapour + gone; constant in time."""
-        # V_i = delta_hat deta_l sum_c phi_ic + L_hat deta_g sum_c psi_ic + out_i
-        phi, psi, delta_hat, L_hat = self.fields(y) if fields is None else fields
-        in_film = delta_hat * self.liquid_grid.step * phi.sum(axis=1)
-        in_gas = L_hat * self.gas_grid.step * psi.sum(axis=1)
-        gone = y[self.delta_index + 1:]
-        return in_film + in_gas + gone
 
     # --- interface -------------------------------------------------------------
 
@@ -122,8 +118,7 @@ class EvaporationModel:
         # r_i = j_i - phi_i^s delta' - n_i = 0: liquid side minus gas side
         return liquid_flux - phi_s_n * ddelta_dt - flux[:n]
 
-    # --- derivative -------------------------------------------------------------
-
+    # right hand side of the ode
     def rhs(self, t, y):
         """d(state)/dt_hat.  t does not appear: nothing is driven externally."""
         m = self.mixture
@@ -160,8 +155,6 @@ class EvaporationModel:
                     - (self.psi_ambient - psi[:, -1])
                     / (m.alpha * 0.5 * L_hat * gas.step))
 
-        # cells, then delta', then d(out_i)/dt_hat = G_i at eta = 2
         return numpy.concatenate((liquid.divergence(F).ravel(),
                                   gas.divergence(G).ravel(),
-                                  [ddelta_dt],
-                                  G[:, -1]))
+                                  [ddelta_dt]))

@@ -28,7 +28,6 @@ class Result:
     psi: numpy.ndarray             # vapour, liquid-equivalent
     phi_interface: numpy.ndarray
     flux: numpy.ndarray            # evaporative flux n_i
-    budget_error: numpy.ndarray    # conserved volume minus initial
 
     @property
     def eta_liquid(self):
@@ -75,6 +74,7 @@ def backward_euler_step(model, t, y, h, newton_tol, max_newton):
         size = numpy.max(numpy.abs(correction))
         if size <= newton_tol:
             return y_next
+        # a correction that failed to halve means the frozen Jacobian is stale
         if size > 0.5 * previous:
             # converging too slowly: the frozen Jacobian has gone stale
             matrix = numpy.eye(y.size) - h * jacobian(model, t + h, y_next)
@@ -124,7 +124,7 @@ def compute(model, t_end, dt, store_period=1, progress=0, newton_tol=1e-10,
 
 
 def post_process(model, t, states):
-    """Split each stored state into profiles, interface values and a budget."""
+    """Split each stored state into profiles and interface values."""
     m = model.mixture
     nt = t.size
     delta = numpy.empty(nt)
@@ -132,15 +132,12 @@ def post_process(model, t, states):
     psi = numpy.empty((m.n, model.gas_grid.n, nt))
     phi_interface = numpy.empty((m.n, nt))
     flux = numpy.empty((m.n, nt))
-    budget = numpy.empty((m.n, nt))
-    initial = model.conserved_volume(model.initial_state())
 
     for c in range(nt):
         fields = model.fields(states[:, c])
         phi[..., c], psi[..., c], delta[c], L_hat = fields
         phi_interface[:, c], _, flux[:, c], _, _ = model.interface(
             phi[:, -1, c], psi[:, 0, c], delta[c], L_hat)
-        budget[:, c] = model.conserved_volume(states[:, c], fields) - initial
 
     return Result(model=model, t=t, delta=delta, phi=phi, psi=psi,
-                  phi_interface=phi_interface, flux=flux, budget_error=budget)
+                  phi_interface=phi_interface, flux=flux)
