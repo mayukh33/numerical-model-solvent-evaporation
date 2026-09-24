@@ -1,4 +1,4 @@
-"""Fixed-step backward Euler in scaled time; nothing adapts."""
+"""Fixed-step backward Euler in scaled time; the step never adapts."""
 
 import time
 from dataclasses import dataclass
@@ -56,11 +56,12 @@ def jacobian(model, t, y, eps=1e-7):
 
 
 def backward_euler_step(model, t, y, h, newton_tol, max_newton):
-    """The state at t + h, by Newton with a frozen Jacobian."""
+    """The state at t + h, by Newton with a frozen Jacobian, re-formed if stale."""
     # y_next = y + h f(t + h, y_next); Newton solves (I - h J) c = -r for c
     matrix = numpy.eye(y.size) - h * jacobian(model, t + h, y)
 
     y_next = y.copy()
+    previous = numpy.inf
     for _ in range(max_newton):
         try:
             # r = y_next - y - h f(t + h, y_next)
@@ -71,8 +72,13 @@ def backward_euler_step(model, t, y, h, newton_tol, max_newton):
                 f"model's range ({reason}). Use a smaller dt.") from reason
         correction = numpy.linalg.solve(matrix, -residual)
         y_next = y_next + correction
-        if numpy.max(numpy.abs(correction)) <= newton_tol:
+        size = numpy.max(numpy.abs(correction))
+        if size <= newton_tol:
             return y_next
+        if size > 0.5 * previous:
+            # converging too slowly: the frozen Jacobian has gone stale
+            matrix = numpy.eye(y.size) - h * jacobian(model, t + h, y_next)
+        previous = size
 
     raise RuntimeError(
         f"Newton did not converge at t_hat = {t + h:.6g} with h = {h:.3g}; "

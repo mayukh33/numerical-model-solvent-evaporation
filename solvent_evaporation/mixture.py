@@ -24,7 +24,7 @@ class Mixture:
         return numpy.concatenate((partial, last.reshape((1,) + partial.shape[1:])))
 
     def mole_fractions(self, phi):
-        """Mole fractions phi_i/nu_i, normalised; not clipped."""
+        """Mole fractions at phi (N,), normalised over components; not clipped."""
         # x_i = (phi_i/nu_i) / sum_k (phi_k/nu_k)
         c = phi / self.nu
         return c / c.sum()
@@ -37,7 +37,3 @@ class Mixture:
     def fick_matrix(self, phi):
         """Volume-frame Fick matrix over D_ref, (N-1, N-1), at phi (N,)."""
         return diffusion.fick_matrix(phi, self.nu, self.D0)
-
-    def mole_fraction_jacobian(self, phi):
-        """dx_j/dphi_l, (N-1, N-1), at phi (N,); phi_N is the eliminated one."""
-        return diffusion.mole_fraction_jacobian(phi, self.nu)
