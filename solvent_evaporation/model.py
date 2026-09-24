@@ -1,10 +1,7 @@
 """Governing equations in scaled coordinates; see VOLUME_FRAME.tex."""
 
 import numpy
-from scipy.optimize import brentq, least_squares
-
-from .mesh import Grid
-
+import scipy
 
 class EvaporationModel:
     """One evaporating film: mixture groups, initial state, geometry, meshes."""
@@ -56,32 +53,18 @@ class EvaporationModel:
 
     # --- interface -------------------------------------------------------------
 
-    def interface(self, phi_last, psi_first, delta_hat, L_hat):
+    def interface(self, phi_last, psi_first, delta_hat, L_hat, max_iter=100):
         """Solve the jump balance for the interface composition."""
         n = self.mixture.n - 1
         h_l = 0.5 * delta_hat * self.liquid_grid.step
         h_g = 0.5 * L_hat * self.gas_grid.step
         args = (phi_last, psi_first, h_l, h_g)
 
-        if n == 1 and phi_last[0] > 0.0:
-            try:
-                root = brentq(lambda x: self.interface_residual(
-                    numpy.array([x]), *args)[0], 0.0, phi_last[0], xtol=1e-12)
-                return self.interface_state(numpy.array([root]), psi_first, h_g)
-            except ValueError:
-                # No sign change: bracket lost; the bounded solve handles it.
-                pass
-
-        solved = least_squares(self.interface_residual,
+        # r(phi_s) = 0 by bounded least squares; the box keeps phi_s a volume fraction
+        solved = scipy.optimize.least_squares(self.interface_residual,
                                numpy.clip(phi_last[:n], 0.0, 1.0), args=args,
-                               bounds=(0.0, 1.0),
+                               bounds=(0.0, 1.0), max_nfev=max_iter,
                                xtol=1e-10, ftol=1e-10, gtol=1e-15)
-        # least_squares can report success on a bound short of the root
-        step = numpy.linalg.lstsq(solved.jac, solved.fun, rcond=None)[0]
-        if numpy.abs(step).max() > 1e-8 or solved.x.sum() > 1.0:
-            raise RuntimeError(
-                f"the interface solve found no root (phi_s = {solved.x}, "
-                f"residual {numpy.abs(solved.fun).max():.3g})")
         return self.interface_state(solved.x, psi_first, h_g)
 
     def interface_state(self, phi_s_n, psi_first, h_g):

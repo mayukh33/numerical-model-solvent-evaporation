@@ -74,7 +74,6 @@ def backward_euler_step(model, t, y, h, newton_tol, max_newton):
         size = numpy.max(numpy.abs(correction))
         if size <= newton_tol:
             return y_next
-        # a correction that failed to halve means the frozen Jacobian is stale
         if size > 0.5 * previous:
             # converging too slowly: the frozen Jacobian has gone stale
             matrix = numpy.eye(y.size) - h * jacobian(model, t + h, y_next)
@@ -87,7 +86,7 @@ def backward_euler_step(model, t, y, h, newton_tol, max_newton):
 
 
 def compute(model, t_end, dt, store_period=1, progress=0, newton_tol=1e-10,
-            max_newton=1000):
+            max_newton=50):
     """March from t_hat = 0 to t_end in steps of exactly dt."""
     n_steps = numpy.max((1, numpy.round(t_end / dt))).astype(numpy.int64)
 
