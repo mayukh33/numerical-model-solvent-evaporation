@@ -1,5 +1,3 @@
-"""Multicomponent Vignes diffusivities, inverted to a volume-frame Fick matrix."""
-
 import numpy
 
 

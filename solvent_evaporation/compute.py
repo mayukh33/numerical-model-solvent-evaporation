@@ -1,4 +1,4 @@
-"""Fixed-step backward Euler in scaled time; the step never adapts."""
+"""Fixed-step backward Euler."""
 
 import time
 from dataclasses import dataclass

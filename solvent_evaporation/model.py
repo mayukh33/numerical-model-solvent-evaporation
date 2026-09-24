@@ -1,5 +1,3 @@
-"""Governing equations in scaled coordinates; see VOLUME_FRAME.tex."""
-
 import numpy
 import scipy
 

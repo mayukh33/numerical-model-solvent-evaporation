@@ -1,5 +1,3 @@
-"""Uniform finite-volume cells on [start, start + 1]; start = 1 for the gas."""
-
 import numpy
 
 
